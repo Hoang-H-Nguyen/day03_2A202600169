@@ -45,23 +45,51 @@ class ReActAgent:
         """
         logger.log_event("AGENT_START", {"input": user_input, "model": self.llm.model_name})
         
-        current_prompt = user_input
+        current_context = f"User: {user_input}"
         steps = 0
 
         while steps < self.max_steps:
-            # TODO: Generate LLM response
-            # result = self.llm.generate(current_prompt, system_prompt=self.get_system_prompt())
+            # GỌI LLM: Nhận về kết quả (có thể là dict hoặc str)
+            raw_result = self.llm.generate(current_context, system_prompt=self.get_system_prompt())
             
-            # TODO: Parse Thought/Action from result
+            # Trích xuất nội dung văn bản từ kết quả trả về
+            if isinstance(raw_result, dict):
+                result_text = raw_result.get('content', '')
+            else:
+                result_text = str(raw_result)
             
-            # TODO: If Action found -> Call tool -> Append Observation
+            print(f"\n--- Bước {steps + 1} ---")
+            print(result_text)
+
+            # Kiểm tra nếu có Final Answer
+            if "Final Answer:" in result_text:
+                final_response = result_text.split("Final Answer:")[-1].strip()
+                logger.log_event("AGENT_END", {"steps": steps + 1, "status": "success"})
+                return final_response
+
+            # Parse Action dùng Regex trên chuỗi văn bản result_text
+            action_match = re.search(r"Action:\s*(\w+)\((.*)\)", result_text)
             
-            # TODO: If Final Answer found -> Break loop
-            
+            if action_match:
+                tool_name = action_match.group(1)
+                # Làm sạch tham số (bỏ dấu ngoặc đơn, kép thừa)
+                tool_args = action_match.group(2).strip().strip("'").strip('"')
+                
+                # Thực thi công cụ
+                observation = self._execute_tool(tool_name, tool_args)
+                print(f"Observation: {observation}")
+                
+                # Cập nhật context cho lượt suy nghĩ tiếp theo
+                current_context += f"\n{result_text}\nObservation: {observation}"
+            else:
+                # Nếu LLM quên không đưa ra Action đúng định dạng
+                msg = "Lỗi: Bạn chưa đưa ra Action đúng định dạng (Action: ten_tool(tham_so))."
+                current_context += f"\n{result_text}\nObservation: {msg}"
+
             steps += 1
             
-        logger.log_event("AGENT_END", {"steps": steps})
-        return "Not implemented. Fill in the TODOs!"
+        logger.log_event("AGENT_END", {"steps": steps, "status": "max_steps_reached"})
+        return "Tôi đã đạt giới hạn bước xử lý nhưng chưa có câu trả lời cuối cùng."
 
     def _execute_tool(self, tool_name: str, args: str) -> str:
         """
