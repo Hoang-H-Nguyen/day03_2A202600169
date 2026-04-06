@@ -17,23 +17,24 @@ class ReActAgent:
         self.history = []
 
     def get_system_prompt(self) -> str:
-        """
-        TODO: Implement the system prompt that instructs the agent to follow ReAct.
-        Should include:
-        1.  Available tools and their descriptions.
-        2.  Format instructions: Thought, Action, Observation.
-        """
         tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
         return f"""
-        You are an intelligent assistant. You have access to the following tools:
+        Bạn là một trợ lý thông minh hỗ trợ tra cứu điểm thi và trường đại học.
+        Bạn có quyền truy cập vào các công cụ sau:
         {tool_descriptions}
 
-        Use the following format:
-        Thought: your line of reasoning.
-        Action: tool_name(arguments)
-        Observation: result of the tool call.
-        ... (repeat Thought/Action/Observation if needed)
-        Final Answer: your final response.
+        Quy trình làm việc của bạn (ReAct):
+        1. Thought: Bạn nêu suy nghĩ về việc cần làm.
+        2. Action: Bạn gọi công cụ theo định dạng: ten_cong_cu(tham_so)
+        3. Observation: Bạn nhận kết quả từ công cụ đó.
+        ... (Lặp lại nếu cần thiết)
+        4. Final Answer: Bạn đưa ra câu trả lời cuối cùng cho người dùng.
+
+        LƯU Ý: 
+        - Luôn bắt đầu bằng Thought.
+        - Mỗi lượt chỉ thực hiện MỘT Action.
+        - Action phải nằm trên một dòng riêng biệt.
+        - Nếu đã có đủ thông tin, hãy trả về Final Answer ngay lập tức.
         """
 
     def run(self, user_input: str) -> str:
