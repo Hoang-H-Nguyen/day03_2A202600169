@@ -65,10 +65,27 @@ class ReActAgent:
 
     def _execute_tool(self, tool_name: str, args: str) -> str:
         """
-        Helper method to execute tools by name.
+        Thực thi các công cụ dựa trên tên.
         """
-        for tool in self.tools:
-            if tool['name'] == tool_name:
-                # TODO: Implement dynamic function calling or simple if/else
-                return f"Result of {tool_name}"
-        return f"Tool {tool_name} not found."
+        # Giả lập Database (Thay bằng database thật của bạn)
+        database = [
+            {"truong": "ĐH Bách Khoa", "nganh": "CNTT", "diem_chuan": 28.15},
+            {"truong": "ĐH Kinh Tế Quốc Dân", "nganh": "Logistics", "diem_chuan": 27.0},
+            {"truong": "ĐH Công Nghệ - ĐHQGHN", "nganh": "CNTT", "diem_chuan": 27.5},
+            {"truong": "ĐH Giao Thông Vận Tải", "nganh": "CNTT", "diem_chuan": 24.5},
+        ]
+
+        if tool_name == "tra_cuu_diem":
+            # Tìm ngành theo tên
+            res = [d for d in database if args.lower() in d['nganh'].lower()]
+            return str(res) if res else "Không tìm thấy dữ liệu ngành này."
+        
+        elif tool_name == "loc_truong_theo_diem":
+            try:
+                diem_hs = float(args)
+                res = [d for d in database if d['diem_chuan'] <= diem_hs]
+                return str(res)
+            except:
+                return "Lỗi: Tham số điểm phải là một số thực."
+
+        return f"Cảnh báo: Công cụ '{tool_name}' không tồn tại trong danh sách."
